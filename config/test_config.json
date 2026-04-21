@@ -1,0 +1,18 @@
+{
+    "camera": {
+        "frameRate": 30.0,
+        "height": 480,
+        "index": 0,
+        "width": 640
+    },
+    "faceDetection": {
+        "confidenceThreshold": 0.5,
+        "enabled": true,
+        "method": "cascade"
+    },
+    "output": {
+        "autoSave": false,
+        "directory": "./output",
+        "displayLiveView": true
+    }
+}

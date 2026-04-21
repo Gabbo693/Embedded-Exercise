@@ -1,0 +1,147 @@
+[2026-04-21 14:26:32.509] [INFO ] USB Camera Face Detection System Started
+[2026-04-21 14:26:32.510] [INFO ] Scanning for USB cameras (indices 1-10)...
+[2026-04-21 14:26:32.799] [WARN ] No USB camera found. Falling back to index 0 (built-in camera)
+[2026-04-21 14:26:32.799] [INFO ] Attempting to connect to camera at index: 0
+[2026-04-21 14:26:32.799] [INFO ] Opening USB Camera (index: 0)...
+[2026-04-21 14:26:35.929] [INFO ] USB camera connected successfully!
+[2026-04-21 14:26:35.930] [INFO ] Resolution: 640x480
+[2026-04-21 14:26:35.930] [INFO ] FPS: 30.000000
+[2026-04-21 14:26:35.930] [INFO ] USB camera connected via auto-detection
+[2026-04-21 14:26:35.949] [INFO ] Cascade classifier loaded successfully: C:\opencv\build\etc\haarcascades\haarcascade_frontalface_default.xml
+[2026-04-21 14:26:35.949] [INFO ] Face detection enabled
+[2026-04-21 14:26:35.949] [INFO ] Face detection enabled
+[2026-04-21 14:26:37.267] [INFO ] Detected 0 faces in 736.692700 ms
+[2026-04-21 14:26:37.272] [INFO ] Detected 0 faces in 4.749700 ms
+[2026-04-21 14:26:37.284] [INFO ] Detected 0 faces in 8.082400 ms
+[2026-04-21 14:26:37.293] [INFO ] Detected 0 faces in 7.909300 ms
+[2026-04-21 14:26:37.293] [ERROR] Failed to save image: output/capture_20260421_142637_272.jpg
+[2026-04-21 14:26:37.813] [INFO ] Detected 1 faces in 13.865300 ms
+[2026-04-21 14:26:37.828] [INFO ] Detected 1 faces in 14.532300 ms
+[2026-04-21 14:26:37.847] [INFO ] Detected 1 faces in 14.585300 ms
+[2026-04-21 14:26:37.860] [INFO ] Detected 1 faces in 12.652700 ms
+[2026-04-21 14:26:37.861] [ERROR] Failed to save image: output/capture_20260421_142637_828.jpg
+[2026-04-21 14:26:38.385] [INFO ] Detected 2 faces in 17.174700 ms
+[2026-04-21 14:26:38.399] [INFO ] Detected 2 faces in 13.078300 ms
+[2026-04-21 14:26:38.419] [INFO ] Detected 2 faces in 15.501600 ms
+[2026-04-21 14:26:38.435] [INFO ] Detected 2 faces in 14.636000 ms
+[2026-04-21 14:26:38.436] [ERROR] Failed to save image: output/capture_20260421_142638_399.jpg
+[2026-04-21 14:26:38.964] [INFO ] Detected 2 faces in 16.859800 ms
+[2026-04-21 14:26:38.979] [INFO ] Detected 2 faces in 15.016800 ms
+[2026-04-21 14:26:39.000] [INFO ] Detected 1 faces in 15.583600 ms
+[2026-04-21 14:26:39.014] [INFO ] Detected 1 faces in 12.977200 ms
+[2026-04-21 14:26:39.014] [ERROR] Failed to save image: output/capture_20260421_142638_980.jpg
+[2026-04-21 14:26:39.547] [INFO ] Detected 1 faces in 18.287600 ms
+[2026-04-21 14:26:39.562] [INFO ] Detected 1 faces in 13.776400 ms
+[2026-04-21 14:26:39.579] [INFO ] Detected 1 faces in 12.398900 ms
+[2026-04-21 14:26:39.593] [INFO ] Detected 1 faces in 12.402700 ms
+[2026-04-21 14:26:39.594] [ERROR] Failed to save image: output/capture_20260421_142639_562.jpg
+[2026-04-21 14:26:40.137] [INFO ] Detected 1 faces in 18.911400 ms
+[2026-04-21 14:26:40.149] [INFO ] Detected 1 faces in 12.252200 ms
+[2026-04-21 14:26:40.165] [INFO ] Detected 1 faces in 11.683300 ms
+[2026-04-21 14:26:40.179] [INFO ] Detected 1 faces in 13.637500 ms
+[2026-04-21 14:26:40.179] [ERROR] Failed to save image: output/capture_20260421_142640_150.jpg
+[2026-04-21 14:26:40.713] [INFO ] Detected 1 faces in 19.222600 ms
+[2026-04-21 14:26:40.727] [INFO ] Detected 1 faces in 12.845500 ms
+[2026-04-21 14:26:40.745] [INFO ] Detected 1 faces in 13.492700 ms
+[2026-04-21 14:26:40.760] [INFO ] Detected 1 faces in 13.567600 ms
+[2026-04-21 14:26:40.761] [ERROR] Failed to save image: output/capture_20260421_142640_728.jpg
+[2026-04-21 14:26:41.295] [INFO ] Detected 1 faces in 16.179400 ms
+[2026-04-21 14:26:41.309] [INFO ] Detected 1 faces in 13.135400 ms
+[2026-04-21 14:26:41.325] [INFO ] Detected 1 faces in 11.140700 ms
+[2026-04-21 14:26:41.340] [INFO ] Detected 1 faces in 14.212100 ms
+[2026-04-21 14:26:41.340] [ERROR] Failed to save image: output/capture_20260421_142641_310.jpg
+[2026-04-21 14:26:42.146] [INFO ] USB camera disconnected
+[2026-04-21 14:26:42.147] [INFO ] Auto-capture session ended. Total captures: 0
+[2026-04-21 14:28:30.797] [INFO ] USB Camera Face Detection System Started
+[2026-04-21 14:28:30.797] [INFO ] Scanning for USB cameras (indices 1-10)...
+[2026-04-21 14:28:31.067] [WARN ] No USB camera found. Falling back to index 0 (built-in camera)
+[2026-04-21 14:28:31.067] [INFO ] Attempting to connect to camera at index: 0
+[2026-04-21 14:28:31.067] [INFO ] Opening USB Camera (index: 0)...
+[2026-04-21 14:28:34.247] [INFO ] USB camera connected successfully!
+[2026-04-21 14:28:34.247] [INFO ] Resolution: 640x480
+[2026-04-21 14:28:34.247] [INFO ] FPS: 30.000000
+[2026-04-21 14:28:34.247] [INFO ] USB camera connected via auto-detection
+[2026-04-21 14:28:34.262] [INFO ] Cascade classifier loaded successfully: C:\opencv\build\etc\haarcascades\haarcascade_frontalface_default.xml
+[2026-04-21 14:28:34.262] [INFO ] Face detection enabled
+[2026-04-21 14:28:34.262] [INFO ] Face detection enabled
+[2026-04-21 14:28:34.747] [INFO ] Detected 1 faces in 181.425800 ms
+[2026-04-21 14:28:34.759] [INFO ] Detected 1 faces in 11.169800 ms
+[2026-04-21 14:28:34.775] [INFO ] Detected 2 faces in 12.031700 ms
+[2026-04-21 14:28:34.786] [INFO ] Detected 2 faces in 10.450500 ms
+[2026-04-21 14:28:34.787] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:34.787] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:35.317] [INFO ] Detected 1 faces in 13.607000 ms
+[2026-04-21 14:28:35.330] [INFO ] Detected 1 faces in 12.222700 ms
+[2026-04-21 14:28:35.361] [INFO ] Detected 1 faces in 12.588300 ms
+[2026-04-21 14:28:35.373] [INFO ] Detected 1 faces in 11.248600 ms
+[2026-04-21 14:28:35.373] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:35.374] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:35.901] [INFO ] Detected 1 faces in 16.268900 ms
+[2026-04-21 14:28:35.916] [INFO ] Detected 1 faces in 14.906900 ms
+[2026-04-21 14:28:35.934] [INFO ] Detected 1 faces in 13.896200 ms
+[2026-04-21 14:28:35.946] [INFO ] Detected 1 faces in 11.555800 ms
+[2026-04-21 14:28:35.946] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:35.947] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:36.468] [INFO ] Detected 1 faces in 16.035500 ms
+[2026-04-21 14:28:36.482] [INFO ] Detected 1 faces in 13.846400 ms
+[2026-04-21 14:28:36.536] [INFO ] Detected 1 faces in 12.221700 ms
+[2026-04-21 14:28:36.547] [INFO ] Detected 1 faces in 10.566300 ms
+[2026-04-21 14:28:36.547] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:36.548] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:37.087] [INFO ] Detected 1 faces in 17.895400 ms
+[2026-04-21 14:28:37.105] [INFO ] Detected 1 faces in 17.954600 ms
+[2026-04-21 14:28:37.122] [INFO ] Detected 1 faces in 12.237000 ms
+[2026-04-21 14:28:37.135] [INFO ] Detected 1 faces in 12.511400 ms
+[2026-04-21 14:28:37.136] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:37.136] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:37.674] [INFO ] Detected 1 faces in 19.808400 ms
+[2026-04-21 14:28:37.687] [INFO ] Detected 1 faces in 12.458500 ms
+[2026-04-21 14:28:37.702] [INFO ] Detected 1 faces in 10.284200 ms
+[2026-04-21 14:28:37.714] [INFO ] Detected 1 faces in 10.998800 ms
+[2026-04-21 14:28:37.714] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:37.715] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:38.248] [INFO ] Detected 1 faces in 18.030200 ms
+[2026-04-21 14:28:38.264] [INFO ] Detected 1 faces in 15.119500 ms
+[2026-04-21 14:28:38.281] [INFO ] Detected 1 faces in 13.947400 ms
+[2026-04-21 14:28:38.296] [INFO ] Detected 1 faces in 13.666300 ms
+[2026-04-21 14:28:38.296] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:38.297] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:38.828] [INFO ] Detected 1 faces in 17.938500 ms
+[2026-04-21 14:28:38.844] [INFO ] Detected 1 faces in 16.004800 ms
+[2026-04-21 14:28:38.861] [INFO ] Detected 1 faces in 12.366300 ms
+[2026-04-21 14:28:38.874] [INFO ] Detected 1 faces in 12.548400 ms
+[2026-04-21 14:28:38.875] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:38.876] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:39.403] [INFO ] Detected 1 faces in 18.394100 ms
+[2026-04-21 14:28:39.418] [INFO ] Detected 1 faces in 13.942300 ms
+[2026-04-21 14:28:39.436] [INFO ] Detected 1 faces in 13.504600 ms
+[2026-04-21 14:28:39.448] [INFO ] Detected 1 faces in 12.135200 ms
+[2026-04-21 14:28:39.449] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:39.450] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:39.981] [INFO ] Detected 1 faces in 15.670900 ms
+[2026-04-21 14:28:39.997] [INFO ] Detected 1 faces in 15.174900 ms
+[2026-04-21 14:28:40.012] [INFO ] Detected 1 faces in 11.791000 ms
+[2026-04-21 14:28:40.025] [INFO ] Detected 1 faces in 11.899900 ms
+[2026-04-21 14:28:40.026] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:40.026] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:40.550] [INFO ] Detected 1 faces in 15.940900 ms
+[2026-04-21 14:28:40.564] [INFO ] Detected 1 faces in 13.890700 ms
+[2026-04-21 14:28:40.581] [INFO ] Detected 1 faces in 12.085100 ms
+[2026-04-21 14:28:40.595] [INFO ] Detected 1 faces in 13.901700 ms
+[2026-04-21 14:28:40.596] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:40.596] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:41.114] [INFO ] Detected 1 faces in 12.098200 ms
+[2026-04-21 14:28:41.126] [INFO ] Detected 1 faces in 11.494400 ms
+[2026-04-21 14:28:41.142] [INFO ] Detected 1 faces in 12.267200 ms
+[2026-04-21 14:28:41.155] [INFO ] Detected 1 faces in 12.410100 ms
+[2026-04-21 14:28:41.156] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:41.157] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:41.686] [INFO ] Detected 1 faces in 17.062600 ms
+[2026-04-21 14:28:41.699] [INFO ] Detected 1 faces in 12.576100 ms
+[2026-04-21 14:28:41.716] [INFO ] Detected 1 faces in 13.030000 ms
+[2026-04-21 14:28:41.727] [INFO ] Detected 1 faces in 11.245100 ms
+[2026-04-21 14:28:41.728] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:41.728] [ERROR] Failed to save image: output/capture_1.jpg
+[2026-04-21 14:28:42.241] [INFO ] User requested stop
+[2026-04-21 14:28:42.567] [INFO ] USB camera disconnected
+[2026-04-21 14:28:42.567] [INFO ] Auto-capture session ended. Total captures: 0

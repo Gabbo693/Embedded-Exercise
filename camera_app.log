@@ -1,0 +1,25 @@
+[2026-04-21 14:06:29.988] [INFO ] USB Camera Face Detection System Started
+[2026-04-21 14:07:04.465] [INFO ] Opening USB Camera (index: 0)...
+[2026-04-21 14:07:07.826] [INFO ] USB camera connected successfully!
+[2026-04-21 14:07:07.826] [INFO ] Resolution: 640x480
+[2026-04-21 14:07:07.826] [INFO ] FPS: 30.000000
+[2026-04-21 14:07:07.826] [INFO ] Camera connected
+[2026-04-21 14:07:38.415] [INFO ] Cascade classifier loaded successfully: C:\opencv\build\etc\haarcascades\haarcascade_frontalface_default.xml
+[2026-04-21 14:07:38.415] [INFO ] Face detection enabled
+[2026-04-21 14:07:38.415] [INFO ] Face detection enabled
+[2026-04-21 14:08:02.294] [INFO ] Detected 0 faces in 2366.580000 ms
+[2026-04-21 14:08:02.299] [INFO ] Detected 0 faces in 4.591300 ms
+[2026-04-21 14:08:18.945] [INFO ] Detected 0 faces in 7.297200 ms
+[2026-04-21 14:08:18.951] [INFO ] Detected 0 faces in 5.433900 ms
+[2026-04-21 14:08:18.954] [INFO ] Image saved: output/test_face_detection.jpg
+[2026-04-21 14:08:18.955] [INFO ] Face detection image saved: output/test_face_detection.jpg
+[2026-04-21 14:08:41.993] [INFO ] USB camera disconnected
+[2026-04-21 14:08:41.993] [INFO ] Application closed
+[2026-04-21 14:14:15.771] [INFO ] USB Camera Face Detection System Started
+[2026-04-21 14:14:40.725] [INFO ] Opening USB Camera (index: 0)...
+[2026-04-21 14:14:44.076] [INFO ] USB camera connected successfully!
+[2026-04-21 14:14:44.076] [INFO ] Resolution: 640x480
+[2026-04-21 14:14:44.076] [INFO ] FPS: 30.000000
+[2026-04-21 14:14:44.076] [INFO ] Camera connected
+[2026-04-21 14:15:39.287] [INFO ] Image saved: output/live_camera_frame.jpg
+[2026-04-21 14:15:39.287] [INFO ] Image saved: output/live_camera_frame.jpg

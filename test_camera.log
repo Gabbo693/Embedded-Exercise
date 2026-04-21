@@ -1,0 +1,18 @@
+[2026-04-21 14:13:48.406] [INFO ] Test suite started
+[2026-04-21 14:13:48.406] [INFO ] Opening USB Camera (index: 0)...
+[2026-04-21 14:13:51.534] [INFO ] USB camera connected successfully!
+[2026-04-21 14:13:51.534] [INFO ] Resolution: 640x480
+[2026-04-21 14:13:51.534] [INFO ] FPS: 30.000000
+[2026-04-21 14:13:53.767] [INFO ] Resolution set to: 640x480
+[2026-04-21 14:13:54.345] [DEBUG] Frame captured: 1 (578.024500 ms)
+[2026-04-21 14:13:54.412] [DEBUG] Frame captured: 2 (67.415200 ms)
+[2026-04-21 14:13:54.416] [DEBUG] Frame captured: 3 (4.087100 ms)
+[2026-04-21 14:13:54.420] [DEBUG] Frame captured: 4 (3.722200 ms)
+[2026-04-21 14:13:54.512] [DEBUG] Frame captured: 5 (88.195100 ms)
+[2026-04-21 14:13:54.516] [ERROR] Failed to load cascade classifier: C:\opencv\data\haarcascades\haarcascade_frontalface_default.xml
+[2026-04-21 14:13:54.516] [ERROR] Failed to initialize face detector with cascade: C:\opencv\data\haarcascades\haarcascade_frontalface_default.xml
+[2026-04-21 14:13:54.521] [DEBUG] Frame captured: 6 (4.940500 ms)
+[2026-04-21 14:13:54.525] [INFO ] Image saved: output/test_image.jpg
+[2026-04-21 14:13:54.525] [INFO ] Configuration saved to: config/test_config.json
+[2026-04-21 14:13:54.834] [INFO ] USB camera disconnected
+[2026-04-21 14:13:54.834] [INFO ] Test suite completed successfully
