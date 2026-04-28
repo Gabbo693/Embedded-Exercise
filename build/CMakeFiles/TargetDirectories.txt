@@ -1,4 +1,0 @@
-C:/Users/User/Desktop/Milestone A/build/CMakeFiles/usb_camera_app.dir
-C:/Users/User/Desktop/Milestone A/build/CMakeFiles/test_camera.dir
-C:/Users/User/Desktop/Milestone A/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/User/Desktop/Milestone A/build/CMakeFiles/ZERO_CHECK.dir
