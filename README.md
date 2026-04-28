@@ -32,10 +32,35 @@ A Python application that detects faces in real-time camera streams using improv
 
 ### Camera Support
 
-- **Camera ID 0**: Default laptop camera (fallback)
-- **Camera ID 1**: External HP camera (preferred)
-- **Auto-detection**: System automatically detects and uses the best available camera
-- **Verbose Output**: Shows which camera is being used and detection results
+The app uses a **camera index** (an integer) to pick which physical camera to capture from. Most laptops expose:
+
+| Camera index | Typical device                                  |
+|:------------:|--------------------------------------------------|
+| `0`          | **Built-in front (laptop) camera** — default     |
+| `1`          | First external USB / HP webcam                   |
+| `2`, `3`, …  | Additional external cameras                      |
+
+#### Selecting a camera
+
+Open [face_detector.py](face_detector.py) and edit the `main()` function:
+
+```python
+detector = CameraFaceDetector(
+    camera_id=0,         # 0 = built-in front camera (current default)
+    auto_detect=False,   # set True to scan and pick the first working one
+    use_dnn=True,
+    min_detection_confidence=0.6,
+)
+```
+
+- **Use the built-in front camera** (current setup): leave `camera_id=0`.
+- **Plug in a new external camera** (USB / HP / etc.):
+  1. Connect the camera and wait for Windows to install drivers.
+  2. Change `camera_id=0` → `camera_id=1` (or `2`, `3` if you have several plugged in).
+  3. Save and re-run `python face_detector.py`.
+- **Don't know the index?** Set `auto_detect=True`. The app will scan IDs `0 → 3` and use the first one that works, printing which one it picked.
+
+> Tip: if two cameras are connected and the wrong one opens, just bump `camera_id` to the next number until you see the right feed.
 
 ## Installation
 
@@ -58,8 +83,7 @@ python face_detector.py
 ```
 
 The application will:
-- Auto-detect your HP camera if connected (camera_id=1)
-- Fall back to default camera if HP camera unavailable
+- Open the **built-in front camera** (`camera_id=0`) by default — change this in `main()` to use an external camera (see [Camera Support](#camera-support))
 - Display real-time video with face detection
 - Draw green bounding boxes around detected faces
 - Number each face (Face 1, Face 2, etc.)

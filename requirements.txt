@@ -1,5 +1,6 @@
 opencv-python>=4.8.0
 opencv-contrib-python>=4.8.0
-numpy>=1.26.0
+numpy>=1.26.0,<2.0
+mediapipe>=0.10.9
 pytest>=7.4.0
 pytest-cov>=4.1.0
