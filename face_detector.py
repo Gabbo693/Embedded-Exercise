@@ -25,6 +25,37 @@ from typing import Deque, List, Optional, Sequence, Tuple
 import cv2
 import numpy as np
 
+# cv2.data.haarcascades is absent in older apt-installed OpenCV builds
+import glob as _glob
+import site as _site
+
+def _find_haar_dir() -> str:
+    try:
+        d = cv2.data.haarcascades
+        if os.path.isdir(d):
+            return d
+    except AttributeError:
+        pass
+    known = [
+        "/usr/share/opencv4/haarcascades/",
+        "/usr/share/opencv/haarcascades/",
+        "/usr/share/OpenCV/haarcascades/",
+        "/usr/local/share/opencv4/haarcascades/",
+        "/usr/local/share/opencv/haarcascades/",
+    ]
+    for sp in _site.getsitepackages():
+        known.append(os.path.join(sp, "cv2", "data") + os.sep)
+    for p in known:
+        if os.path.isdir(p):
+            return p
+    # last resort: scan the filesystem
+    hits = _glob.glob("/usr/**/haarcascade_frontalface_alt2.xml", recursive=True)
+    if hits:
+        return os.path.dirname(hits[0]) + os.sep
+    return ""
+
+_HAAR_DIR = _find_haar_dir()
+
 # ---------------------------------------------------------------------------
 # Optional MediaPipe import (graceful fallback if not installed)
 # Supports BOTH the legacy `mediapipe.solutions` API and the new Tasks API.
@@ -52,9 +83,9 @@ except Exception:  # pragma: no cover - import guard
     _mp = None
     _MP_AVAILABLE = False
 
-# CAP_DSHOW only exists on Windows; use V4L2 on Linux (PYNQ / Raspberry Pi)
+# CAP_DSHOW only exists on Windows; on Linux let OpenCV pick the default backend
 import platform as _platform
-_CV2_CAP_BACKEND = cv2.CAP_DSHOW if _platform.system() == "Windows" else cv2.CAP_V4L2
+_WINDOWS = _platform.system() == "Windows"
 
 # PYNQ camera (Xilinx FPGA board) — graceful fallback on standard machines
 _PYNQ_AVAILABLE = False
@@ -269,10 +300,10 @@ class FaceDetector:
             return False
 
     def _init_haar_cascade(self) -> None:
-        cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_alt2.xml"
+        cascade_path = _HAAR_DIR + "haarcascade_frontalface_alt2.xml"
         self.face_cascade = cv2.CascadeClassifier(cascade_path)
         if self.face_cascade.empty():
-            cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+            cascade_path = _HAAR_DIR + "haarcascade_frontalface_default.xml"
             self.face_cascade = cv2.CascadeClassifier(cascade_path)
             if self.face_cascade.empty():
                 raise ValueError("Failed to load Haar cascade classifier")
@@ -822,7 +853,7 @@ class CameraFaceDetector:
     # ---- camera selection -------------------------------------------------
     def _check_camera_available(self, camera_id: int) -> bool:
         try:
-            cap = cv2.VideoCapture(camera_id, _CV2_CAP_BACKEND)
+            cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW) if _WINDOWS else cv2.VideoCapture(camera_id)
             if cap.isOpened():
                 ok, _ = cap.read()
                 cap.release()
@@ -860,7 +891,7 @@ class CameraFaceDetector:
             if self.auto_detect:
                 self.camera_id = self._find_available_camera()
 
-            self.cap = cv2.VideoCapture(self.camera_id, _CV2_CAP_BACKEND)
+            self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW) if _WINDOWS else cv2.VideoCapture(self.camera_id)
             if not self.cap.isOpened():
                 raise RuntimeError(f"Failed to open camera device {self.camera_id}")
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
