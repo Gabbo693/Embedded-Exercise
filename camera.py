@@ -35,7 +35,7 @@ def setup():
 
     print("Capture device is open: " + str(videoIn.isOpened()))
 
-    return hdmi_out, videoIn
+    return hdmi_out, videoIn, base
 
 def get_frame(videoIn):
     global frame_out_w

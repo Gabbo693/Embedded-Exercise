@@ -653,6 +653,8 @@ class CameraFaceDetector:
         self.camera_id = camera_id
         self.cap: Optional[cv2.VideoCapture] = None
         self._hdmi_out = None
+        self._pynq_base = None
+        self._pynq_btn_prev = [0, 0, 0, 0]  # previous button states for edge detection
         self.auto_detect = auto_detect
         self._fps_samples: Deque[float] = deque(maxlen=30)
         
@@ -883,7 +885,7 @@ class CameraFaceDetector:
     # ---- run loop ---------------------------------------------------------
     def start_detection(self) -> None:
         if _PYNQ_AVAILABLE:
-            self._hdmi_out, self.cap = _camera_module.setup()
+            self._hdmi_out, self.cap, self._pynq_base = _camera_module.setup()
             if not self.cap.isOpened():
                 raise RuntimeError("PYNQ camera failed to open")
             print(f"\n✓ PYNQ camera ready (HDMI out active)")
@@ -1015,8 +1017,23 @@ class CameraFaceDetector:
                 else:
                     cv2.imshow(self.WINDOW_NAME, display)
 
-                # ---- Keyboard input (OpenCV window only; PYNQ uses hardware buttons) ----
-                if not _PYNQ_AVAILABLE:
+                # ---- Input / pacing ----
+                if _PYNQ_AVAILABLE:
+                    # Poll PYNQ Z2 buttons — BTN0-3 = board buttons 1-4
+                    # Edge detection: fire once on press, not continuously while held
+                    if self._pynq_base is not None:
+                        cur = [self._pynq_base.buttons[i].read() for i in range(4)]
+                        if cur[0] and not self._pynq_btn_prev[0]:  # button 1: Start / Restart
+                            self._on_button_start(None)
+                        if cur[1] and not self._pynq_btn_prev[1]:  # button 2: Pause / Resume
+                            self._on_button_pause(None)
+                        if cur[2] and not self._pynq_btn_prev[2]:  # button 3: face target down
+                            self._on_button_left(None)
+                        if cur[3] and not self._pynq_btn_prev[3]:  # button 4: face target up
+                            self._on_button_right(None)
+                        self._pynq_btn_prev = cur
+                    time.sleep(0.01)  # ~100 FPS cap; prevents CPU spin when paused
+                else:
                     key = cv2.waitKey(1) & 0xFF
                     if key == ord('q') or key == 27:
                         break
