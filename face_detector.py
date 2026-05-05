@@ -52,6 +52,10 @@ except Exception:  # pragma: no cover - import guard
     _mp = None
     _MP_AVAILABLE = False
 
+# CAP_DSHOW only exists on Windows; use V4L2 on Linux (PYNQ / Raspberry Pi)
+import platform as _platform
+_CV2_CAP_BACKEND = cv2.CAP_DSHOW if _platform.system() == "Windows" else cv2.CAP_V4L2
+
 # PYNQ camera (Xilinx FPGA board) — graceful fallback on standard machines
 _PYNQ_AVAILABLE = False
 try:
@@ -818,7 +822,7 @@ class CameraFaceDetector:
     # ---- camera selection -------------------------------------------------
     def _check_camera_available(self, camera_id: int) -> bool:
         try:
-            cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+            cap = cv2.VideoCapture(camera_id, _CV2_CAP_BACKEND)
             if cap.isOpened():
                 ok, _ = cap.read()
                 cap.release()
@@ -856,8 +860,7 @@ class CameraFaceDetector:
             if self.auto_detect:
                 self.camera_id = self._find_available_camera()
 
-            # CAP_DSHOW is faster/more reliable on Windows
-            self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
+            self.cap = cv2.VideoCapture(self.camera_id, _CV2_CAP_BACKEND)
             if not self.cap.isOpened():
                 raise RuntimeError(f"Failed to open camera device {self.camera_id}")
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
