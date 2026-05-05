@@ -2,7 +2,9 @@
 Demo and Verification Tests - Shows the face detection system working
 """
 import numpy as np
+print("Importing: numpy")
 from face_detector import FaceDetector
+print("Importing: FaceDetector")
 
 
 def demo_face_detection():

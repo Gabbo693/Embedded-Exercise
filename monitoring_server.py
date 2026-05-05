@@ -2,14 +2,21 @@
 HTTP Monitoring Server
 Provides REST API for game state observation and control
 """
+print("Importing: threading")
 import threading
+print("Importing: json")
 import json
+print("Importing: Dict, Any")
 from typing import Dict, Any
+print("Importing: dataclass, asdict")
 from dataclasses import dataclass, asdict
+print("Importing: Enum")
 from enum import Enum
+print("Importing: datetime")
 from datetime import datetime
 
 try:
+    print("Importing: Flask, jsonify, request")
     from flask import Flask, jsonify, request
     FLASK_AVAILABLE = True
 except ImportError:

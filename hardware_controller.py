@@ -2,10 +2,15 @@
 Hardware Abstraction Layer
 Handles GPIO, buttons, and LEDs with graceful fallback for non-Pi systems
 """
+print("Importing: threading")
 import threading
+print("Importing: time")
 import time
+print("Importing: Callable, Optional, Dict, List")
 from typing import Callable, Optional, Dict, List
+print("Importing: dataclass, field")
 from dataclasses import dataclass, field
+print("Importing: Enum")
 from enum import Enum
 
 
