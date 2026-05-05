@@ -52,6 +52,14 @@ except Exception:  # pragma: no cover - import guard
     _mp = None
     _MP_AVAILABLE = False
 
+# PYNQ camera (Xilinx FPGA board) — graceful fallback on standard machines
+_PYNQ_AVAILABLE = False
+try:
+    import camera as _camera_module
+    _PYNQ_AVAILABLE = True
+except ImportError:
+    _camera_module = None  # type: ignore
+
 # Hardware and monitoring imports
 from hardware_controller import HardwareController, LEDColor, ButtonEvent
 from monitoring_server import MonitoringServer, GameStatus, GameState
@@ -609,6 +617,7 @@ class CameraFaceDetector:
         )
         self.camera_id = camera_id
         self.cap: Optional[cv2.VideoCapture] = None
+        self._hdmi_out = None
         self.auto_detect = auto_detect
         self._fps_samples: Deque[float] = deque(maxlen=30)
         
@@ -838,32 +847,38 @@ class CameraFaceDetector:
 
     # ---- run loop ---------------------------------------------------------
     def start_detection(self) -> None:
-        if self.auto_detect:
-            self.camera_id = self._find_available_camera()
+        if _PYNQ_AVAILABLE:
+            self._hdmi_out, self.cap = _camera_module.setup()
+            if not self.cap.isOpened():
+                raise RuntimeError("PYNQ camera failed to open")
+            print(f"\n✓ PYNQ camera ready (HDMI out active)")
+        else:
+            if self.auto_detect:
+                self.camera_id = self._find_available_camera()
 
-        # CAP_DSHOW is faster/more reliable on Windows
-        self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
-        if not self.cap.isOpened():
-            raise RuntimeError(f"Failed to open camera device {self.camera_id}")
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            # CAP_DSHOW is faster/more reliable on Windows
+            self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
+            if not self.cap.isOpened():
+                raise RuntimeError(f"Failed to open camera device {self.camera_id}")
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-        ok, _ = self.cap.read()
-        if not ok:
-            self.cap.release()
-            raise RuntimeError(f"Camera {self.camera_id} opened but cannot read frames")
+            ok, _ = self.cap.read()
+            if not ok:
+                self.cap.release()
+                raise RuntimeError(f"Camera {self.camera_id} opened but cannot read frames")
 
-        cam_desc = "external (ID 1+)" if self.camera_id >= 1 else "built-in front (ID 0)"
-        print(f"\n✓ Connected to {cam_desc} camera (ID {self.camera_id})")
+            cam_desc = "external (ID 1+)" if self.camera_id >= 1 else "built-in front (ID 0)"
+            print(f"\n✓ Connected to {cam_desc} camera (ID {self.camera_id})")
+            cv2.namedWindow(self.WINDOW_NAME, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(self.WINDOW_NAME, 1280, 720)
+
         print(f"✓ Detection backend: {self.detector.backend}")
         print("  Hotkeys:  [START]=press or ENTER  [PAUSE]=SPACE  [LEFT/RIGHT]=A/D  Q=quit")
         if self.monitoring:
             print(f"  HTTP API: http://localhost:5000/game/status\n")
         else:
             print()
-
-        cv2.namedWindow(self.WINDOW_NAME, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(self.WINDOW_NAME, 1280, 720)
 
         fullscreen = False
         last_frame: Optional[np.ndarray] = None
@@ -878,9 +893,16 @@ class CameraFaceDetector:
 
                 # ---- Frame acquisition (skipped only when paused) ----
                 if not self.paused:
-                    ok, frame = self.cap.read()
+                    if _PYNQ_AVAILABLE:
+                        # camera.get_frame() already applies horizontal mirror
+                        frame = _camera_module.get_frame(self.cap)
+                        ok = frame is not False
+                    else:
+                        ok, frame = self.cap.read()
+                        if ok:
+                            frame = cv2.flip(frame, 1)
+
                     if ok:
-                        frame = cv2.flip(frame, 1)
                         rendered, n_faces, _ = self.detector.process_frame(frame)
                         self.current_faces = n_faces
 
@@ -947,46 +969,59 @@ class CameraFaceDetector:
                 elif self.state == GameState.END:
                     _draw_game_over(display, self.score)
 
-                cv2.imshow(self.WINDOW_NAME, display)
+                # ---- Display output ----
+                if _PYNQ_AVAILABLE:
+                    outframe = self._hdmi_out.newframe()
+                    h_out, w_out = outframe.shape[:2]
+                    h_d, w_d = display.shape[:2]
+                    copy_h = min(h_d, h_out)
+                    copy_w = min(w_d, w_out)
+                    outframe[:copy_h, :copy_w, :] = display[:copy_h, :copy_w, :]
+                    self._hdmi_out.writeframe(outframe)
+                else:
+                    cv2.imshow(self.WINDOW_NAME, display)
 
-                # ---- Keyboard input ----
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q') or key == 27:
-                    break
-                if key in (ord('\r'), ord('\n')):
-                    if self.state in (GameState.IDLE, GameState.END):
+                # ---- Keyboard input (OpenCV window only; PYNQ uses hardware buttons) ----
+                if not _PYNQ_AVAILABLE:
+                    key = cv2.waitKey(1) & 0xFF
+                    if key == ord('q') or key == 27:
+                        break
+                    if key in (ord('\r'), ord('\n')):
+                        if self.state in (GameState.IDLE, GameState.END):
+                            self.start_game()
+                    if key == ord(' '):
+                        self.toggle_pause()
+                    if key == ord('a'):
+                        self._on_button_left(None)
+                    if key == ord('d'):
+                        self._on_button_right(None)
+                    if key == ord('r'):
                         self.start_game()
-                if key == ord(' '):
-                    self.toggle_pause()
-                if key == ord('a'):
-                    self._on_button_left(None)
-                if key == ord('d'):
-                    self._on_button_right(None)
-                if key == ord('r'):
-                    self.start_game()
-                if key == ord('f'):
-                    fullscreen = not fullscreen
-                    cv2.setWindowProperty(
-                        self.WINDOW_NAME, cv2.WND_PROP_FULLSCREEN,
-                        cv2.WINDOW_FULLSCREEN if fullscreen else cv2.WINDOW_NORMAL)
-                if key == ord('s') and last_frame is not None:
-                    snap_idx += 1
-                    fname = f"snapshot_{int(time.time())}_{snap_idx:02d}.png"
-                    cv2.imwrite(fname, last_frame)
-                    print(f"  📸 Saved {fname}")
+                    if key == ord('f'):
+                        fullscreen = not fullscreen
+                        cv2.setWindowProperty(
+                            self.WINDOW_NAME, cv2.WND_PROP_FULLSCREEN,
+                            cv2.WINDOW_FULLSCREEN if fullscreen else cv2.WINDOW_NORMAL)
+                    if key == ord('s') and last_frame is not None:
+                        snap_idx += 1
+                        fname = f"snapshot_{int(time.time())}_{snap_idx:02d}.png"
+                        cv2.imwrite(fname, last_frame)
+                        print(f"  📸 Saved {fname}")
         finally:
             self.stop_detection()
 
     def stop_detection(self) -> None:
         """Clean up resources"""
-        if self.cap is not None:
+        if _PYNQ_AVAILABLE and self._hdmi_out is not None:
+            _camera_module.clean_up(self.cap, self._hdmi_out)
+            self.cap = None
+            self._hdmi_out = None
+        elif self.cap is not None:
             self.cap.release()
             self.cap = None
-        
-        # Clean up hardware
+            cv2.destroyAllWindows()
+
         self.hardware.cleanup()
-        
-        cv2.destroyAllWindows()
         print("✓ Cleanup complete")
 
 

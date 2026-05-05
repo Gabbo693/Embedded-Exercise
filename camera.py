@@ -34,8 +34,8 @@ def setup():
     videoIn.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_in_h)
 
     print("Capture device is open: " + str(videoIn.isOpened()))
-    
-    return hdmi_out
+
+    return hdmi_out, videoIn
 
 def get_frame(videoIn):
     global frame_out_w
