@@ -15,14 +15,22 @@ The live preview renders a modern HUD-style overlay:
 """
 from __future__ import annotations
 
+print("Importing: os")
 import os
+print("Importing: time")
 import time
+print("Importing: urllib.request")
 import urllib.request
+print("Importing: deque")
 from collections import deque
+print("Importing: datetime")
 from datetime import datetime
+print("Importing: Deque, List, Optional, Sequence, Tuple")
 from typing import Deque, List, Optional, Sequence, Tuple
-
+print("Importing: cv2")
 import cv2
+print("Imported: cv2, version=" + cv2.__version__)
+print("Importing: numpy")
 import numpy as np
 
 # cv2.data.haarcascades is absent in older apt-installed OpenCV builds

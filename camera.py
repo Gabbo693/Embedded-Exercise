@@ -1,8 +1,14 @@
+print("Importing: BaseOverlay")
 from pynq.overlays.base import BaseOverlay
+print("Importing: pynq.lib.video")
 from pynq.lib.video import *
+print("Importing: os")
 import os
+print("Importing: cv2")
 import cv2
+print("Importing: numpy")
 import numpy as np
+print("Importing: time")
 import time as t
 
 # monitor (output) frame buffer size
