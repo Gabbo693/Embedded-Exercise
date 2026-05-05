@@ -19,6 +19,7 @@ import os
 import time
 import urllib.request
 from collections import deque
+from datetime import datetime
 from typing import Deque, List, Optional, Sequence, Tuple
 
 import cv2
@@ -50,6 +51,10 @@ try:  # pragma: no cover - import guard
 except Exception:  # pragma: no cover - import guard
     _mp = None
     _MP_AVAILABLE = False
+
+# Hardware and monitoring imports
+from hardware_controller import HardwareController, LEDColor, ButtonEvent
+from monitoring_server import MonitoringServer, GameStatus, GameState
 
 
 # ---------------------------------------------------------------------------
@@ -471,17 +476,133 @@ def _draw_hud(img: np.ndarray, fps: float, n_faces: int, backend: str,
               (14, h - 9), 0.5, Theme.TEXT_DIM, 1)
 
 
+def _draw_game_hud(img: np.ndarray, score: int, strikes: int,
+                   switch_time_remaining: float, current_switch_time: float,
+                   max_faces: int = 1, current_faces: int = 0) -> None:
+    h, w = img.shape[:2]
+
+    # ---- center challenge prompt ----
+    face_met = current_faces >= max_faces
+    s = 'S' if max_faces != 1 else ''
+    challenge = f"SHOW  {max_faces}  FACE{s}"
+    (tw, th), _ = cv2.getTextSize(challenge, Theme.FONT, 0.85, 2)
+    cx = w // 2 - tw // 2
+    cy = 78
+    _draw_translucent_rect(img, (cx - 14, cy - th - 8), (cx + tw + 14, cy + 8),
+                           Theme.PANEL, 0.65)
+    prompt_color = Theme.GOOD if face_met else Theme.ACCENT
+    _put_text(img, challenge, (cx, cy), 0.85, prompt_color, 2)
+
+    # ---- right game stats panel ----
+    panel_x = w - 260
+    panel_y = 52
+    panel_w, panel_h = 240, 135
+
+    _draw_translucent_rect(img, (panel_x, panel_y),
+                           (panel_x + panel_w, panel_y + panel_h),
+                           Theme.PANEL, 0.6)
+    cv2.rectangle(img, (panel_x, panel_y),
+                  (panel_x + panel_w, panel_y + panel_h),
+                  Theme.PANEL_BORDER, 1, cv2.LINE_AA)
+    cv2.line(img, (panel_x, panel_y), (panel_x + panel_w, panel_y),
+             Theme.ACCENT, 2, cv2.LINE_AA)
+
+    _put_text(img, "GAME", (panel_x + 12, panel_y + 22), 0.55, Theme.ACCENT, 1)
+
+    score_str = f"{score:04d}"
+    strikes_str = f"{strikes}/3"
+    faces_str = f"{current_faces}/{max_faces}"
+
+    _put_text(img, "SCORE", (panel_x + 12, panel_y + 44), 0.45, Theme.TEXT_DIM, 1)
+    _put_text(img, score_str, (panel_x + 12, panel_y + 60), 0.65, Theme.GOOD, 1)
+
+    _put_text(img, "STRIKES", (panel_x + 12, panel_y + 80), 0.45, Theme.TEXT_DIM, 1)
+    strike_color = Theme.GOOD if strikes < 3 else Theme.BAD
+    _put_text(img, strikes_str, (panel_x + 12, panel_y + 96), 0.65, strike_color, 1)
+
+    _put_text(img, "FACES", (panel_x + 12, panel_y + 114), 0.45, Theme.TEXT_DIM, 1)
+    face_color = Theme.GOOD if face_met else Theme.WARN
+    _put_text(img, faces_str, (panel_x + 12, panel_y + 130), 0.65, face_color, 1)
+
+    # ---- timer bar (bottom center) ----
+    timer_y = h - 70
+    timer_h = 20
+    timer_x1 = w // 2 - 150
+    timer_x2 = w // 2 + 150
+
+    _draw_translucent_rect(img, (timer_x1, timer_y),
+                           (timer_x2, timer_y + timer_h),
+                           Theme.PANEL, 0.6)
+    cv2.rectangle(img, (timer_x1, timer_y),
+                  (timer_x2, timer_y + timer_h),
+                  Theme.PANEL_BORDER, 1, cv2.LINE_AA)
+
+    safe_switch = current_switch_time if current_switch_time > 0 else 1.0
+    progress = max(0.0, min(1.0, switch_time_remaining / safe_switch))
+    fill_w = int((timer_x2 - timer_x1) * progress)
+
+    if progress > 0.3:
+        bar_color = Theme.GOOD
+    elif progress > 0.1:
+        bar_color = Theme.WARN
+    else:
+        bar_color = Theme.BAD
+
+    if fill_w > 0:
+        _draw_translucent_rect(img, (timer_x1, timer_y),
+                               (timer_x1 + fill_w, timer_y + timer_h),
+                               bar_color, 0.7)
+
+    timer_text = f"{max(0.0, switch_time_remaining):.1f}s"
+    _put_text(img, timer_text, (timer_x1 + 8, timer_y + 15), 0.6, Theme.TEXT, 1)
+
+
+def _draw_game_over(img: np.ndarray, final_score: int) -> None:
+    """Draw game over screen with final score.
+    
+    Args:
+        img: Image to draw on
+        final_score: Final score achieved
+    """
+    h, w = img.shape[:2]
+    
+    # Semi-transparent overlay
+    overlay = img.copy()
+    _draw_translucent_rect(overlay, (0, 0), (w, h), Theme.PANEL, 0.85)
+    cv2.addWeighted(overlay, 0.3, img, 0.7, 0, img)
+    
+    # Game over text
+    game_over_text = "GAME OVER"
+    (tw, th), _ = cv2.getTextSize(game_over_text, Theme.FONT, 2.0, 3)
+    _put_text(img, game_over_text, 
+              (w // 2 - tw // 2, h // 2 - 60), 2.0, Theme.BAD, 3)
+    
+    # Final score
+    score_text = f"Final Score: {final_score}"
+    (tw, th), _ = cv2.getTextSize(score_text, Theme.FONT, 1.0, 2)
+    _put_text(img, score_text,
+              (w // 2 - tw // 2, h // 2 + 20), 1.0, Theme.TEXT, 2)
+    
+    # Instructions
+    inst_text = "Press [Q] to quit   [ENTER] or [R] to restart"
+    (tw, th), _ = cv2.getTextSize(inst_text, Theme.FONT, 0.6, 1)
+    _put_text(img, inst_text,
+              (w // 2 - tw // 2, h // 2 + 80), 0.6, Theme.TEXT_DIM, 1)
+
+
 # ---------------------------------------------------------------------------
 # Camera runner
 # ---------------------------------------------------------------------------
 class CameraFaceDetector:
-    """Real-time face detection from a camera with a polished HUD."""
+    """Real-time face detection from a camera with a polished HUD and hardware integration."""
 
     WINDOW_NAME = "Face Detection — Live"
 
     def __init__(self, camera_id: int = 0, use_dnn: bool = True,
                  auto_detect: bool = False,
-                 min_detection_confidence: float = 0.5) -> None:
+                 min_detection_confidence: float = 0.5,
+                 use_hardware: bool = True,
+                 enable_monitoring: bool = True) -> None:
         self.detector = FaceDetector(
             use_dnn=use_dnn,
             min_detection_confidence=min_detection_confidence,
@@ -490,6 +611,200 @@ class CameraFaceDetector:
         self.cap: Optional[cv2.VideoCapture] = None
         self.auto_detect = auto_detect
         self._fps_samples: Deque[float] = deque(maxlen=30)
+        
+        # Hardware control
+        self.hardware = HardwareController(use_real_gpio=use_hardware)
+        self.monitoring = MonitoringServer() if enable_monitoring else None
+        
+        # Game state machine
+        self.state = GameState.IDLE
+        self.score = 0
+        self.strikes = 0
+        self.game_over = False
+        self.paused = False
+        self.max_faces = 2  # Adjustable max face count
+        self.current_faces = 0
+        self.faces_detected_this_switch = False
+        
+        # Timing variables (all in seconds)
+        self.switch_start_time = 0.0
+        self.pause_start_time = 0.0
+        self.paused_time_accumulated = 0.0
+        self.base_switch_time = 3.0  # Initial time limit
+        
+        # Register button callbacks
+        self._register_button_handlers()
+        
+        # Register monitoring callbacks
+        if self.monitoring:
+            self.monitoring.set_game_state_callback(self._get_status)
+            self.monitoring.set_start_game_callback(self.start_game)
+            self.monitoring.set_pause_game_callback(self.toggle_pause)
+            self.monitoring.set_adjust_max_faces_callback(self._adjust_max_faces)
+            self.monitoring.start()
+    
+    def _register_button_handlers(self) -> None:
+        """Register hardware button event handlers"""
+        self.hardware.register_button_callback("button_start", self._on_button_start)
+        self.hardware.register_button_callback("button_pause", self._on_button_pause)
+        self.hardware.register_button_callback("button_left", self._on_button_left)
+        self.hardware.register_button_callback("button_right", self._on_button_right)
+    
+    def _on_button_start(self, event: ButtonEvent) -> None:
+        """Handler for start button"""
+        if self.state == GameState.IDLE or self.state == GameState.END:
+            self.start_game()
+    
+    def _on_button_pause(self, event: ButtonEvent) -> None:
+        """Handler for pause button"""
+        if self.state == GameState.RUNNING or self.state == GameState.PAUSED:
+            self.toggle_pause()
+    
+    def _on_button_left(self, event: Optional[ButtonEvent]) -> None:
+        """Handler for left button (decrease max faces)"""
+        self._adjust_max_faces(self.max_faces - 1, 'down')
+    
+    def _on_button_right(self, event: Optional[ButtonEvent]) -> None:
+        """Handler for right button (increase max faces)"""
+        self._adjust_max_faces(self.max_faces + 1, 'up')
+    
+    def _adjust_max_faces(self, new_max: int, direction: Optional[str] = None) -> None:
+        """Adjust maximum face count
+        
+        Args:
+            new_max: New maximum value
+            direction: 'up' or 'down' for increment/decrement
+        """
+        if direction == 'up':
+            self.max_faces = min(5, self.max_faces + 1)
+        elif direction == 'down':
+            self.max_faces = max(1, self.max_faces - 1)
+        else:
+            self.max_faces = max(1, min(5, new_max))
+        
+        print(f"  Max faces set to: {self.max_faces}")
+    
+    def _get_status(self) -> GameStatus:
+        """Get current game status for monitoring
+        
+        Returns:
+            GameStatus object with current game state
+        """
+        fps = sum(self._fps_samples) / len(self._fps_samples) if self._fps_samples else 0.0
+        
+        if self.state == GameState.RUNNING and not self.paused:
+            switch_time_remaining = max(0, self.get_switch_time() - self.get_switch_elapsed_time())
+        else:
+            switch_time_remaining = self.get_switch_time()
+        
+        return GameStatus(
+            state=self.state.value,
+            score=self.score,
+            strikes=self.strikes,
+            max_faces=self.max_faces,
+            current_faces=self.current_faces,
+            fps=fps,
+            switch_time_remaining=switch_time_remaining,
+            current_switch_time=self.get_switch_time(),
+            game_over=self.game_over,
+            timestamp=datetime.now().isoformat(),
+            backend=self.detector.backend
+        )
+    
+    # ---- game state management --------------------------------------------
+    def start_game(self) -> None:
+        """Start or restart a game (with ≤2s response time)"""
+        print("Starting game...")
+        self.state = GameState.START
+        self.score = 0
+        self.strikes = 0
+        self.game_over = False
+        self.paused = False
+        self.paused_time_accumulated = 0.0
+        self.faces_detected_this_switch = False
+        self.reset_switch_timer()
+        
+        # LED feedback: flash green on start
+        self.hardware.flash_led(LEDColor.GREEN, duration=0.2, count=2)
+        
+        # Transition to running state
+        self.state = GameState.RUNNING
+        print("✓ Game started")
+    
+    def toggle_pause(self) -> None:
+        """Pause or resume the game with timing preservation"""
+        if self.state != GameState.RUNNING and self.state != GameState.PAUSED:
+            return
+        
+        if self.paused:
+            # Resume: add accumulated paused time to the switch start time
+            pause_duration = time.perf_counter() - self.pause_start_time
+            self.switch_start_time += pause_duration
+            self.paused = False
+            self.state = GameState.RUNNING
+            print("✓ Game resumed")
+        else:
+            # Pause: record pause start time
+            self.pause_start_time = time.perf_counter()
+            self.paused = True
+            self.state = GameState.PAUSED
+            print("✓ Game paused")
+    
+    def end_game(self) -> None:
+        """End the current game"""
+        self.state = GameState.END
+        self.game_over = True
+        print(f"✓ Game ended. Final score: {self.score}")
+        
+        # LED feedback: red flash on game over
+        self.hardware.flash_led(LEDColor.RED, duration=0.5, count=3)
+
+    # ---- game mechanics ---------------------------------------------------
+    def get_switch_time(self) -> float:
+        """Calculate dynamic switch time based on current score.
+        
+        Time decreases as score increases for difficulty scaling.
+        Formula: base_time - (score * 0.1) with minimum of 0.5 seconds
+        """
+        time_limit = self.base_switch_time - (self.score * 0.1)
+        return max(0.5, time_limit)  # Minimum 0.5 seconds
+    
+    def reset_switch_timer(self) -> None:
+        """Reset the switch timer to current time."""
+        self.switch_start_time = time.perf_counter()
+        self.paused_time_accumulated = 0.0
+    
+    def get_switch_elapsed_time(self) -> float:
+        """Get elapsed time since switch started (excluding paused time)."""
+        if self.paused:
+            # While paused, return the time up to pause
+            return (self.pause_start_time - self.switch_start_time) - self.paused_time_accumulated
+        else:
+            # While running, subtract accumulated paused time
+            return (time.perf_counter() - self.switch_start_time) - self.paused_time_accumulated
+    
+    def add_score(self) -> None:
+        """Add to score (called when face is detected)."""
+        self.score += 1
+        # LED feedback: green flash on successful detection
+        self.hardware.flash_led(LEDColor.GREEN, duration=0.2, count=1)
+    
+    def add_strike(self) -> None:
+        """Add a strike. Game ends at 3 strikes."""
+        self.strikes += 1
+        # LED feedback: red flash on strike
+        self.hardware.flash_led(LEDColor.RED, duration=0.2, count=1)
+        
+        if self.strikes >= 3:
+            self.end_game()
+    
+    def reset_game(self) -> None:
+        """Reset game state for a new game."""
+        self.score = 0
+        self.strikes = 0
+        self.game_over = False
+        self.paused = False
+        self.reset_switch_timer()
 
     # ---- camera selection -------------------------------------------------
     def _check_camera_available(self, camera_id: int) -> bool:
@@ -541,12 +856,15 @@ class CameraFaceDetector:
         cam_desc = "external (ID 1+)" if self.camera_id >= 1 else "built-in front (ID 0)"
         print(f"\n✓ Connected to {cam_desc} camera (ID {self.camera_id})")
         print(f"✓ Detection backend: {self.detector.backend}")
-        print("  Hotkeys:  Q=quit  F=fullscreen  S=snapshot  SPACE=pause\n")
+        print("  Hotkeys:  [START]=press or ENTER  [PAUSE]=SPACE  [LEFT/RIGHT]=A/D  Q=quit")
+        if self.monitoring:
+            print(f"  HTTP API: http://localhost:5000/game/status\n")
+        else:
+            print()
 
         cv2.namedWindow(self.WINDOW_NAME, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self.WINDOW_NAME, 1280, 720)
 
-        paused = False
         fullscreen = False
         last_frame: Optional[np.ndarray] = None
         prev_t = time.perf_counter()
@@ -554,45 +872,98 @@ class CameraFaceDetector:
 
         try:
             while True:
-                if not paused:
+                n_faces = 0
+                current_switch_time = self.get_switch_time()
+                elapsed = self.get_switch_elapsed_time()
+
+                # ---- Frame acquisition (skipped only when paused) ----
+                if not self.paused:
                     ok, frame = self.cap.read()
-                    if not ok:
+                    if ok:
+                        frame = cv2.flip(frame, 1)
+                        rendered, n_faces, _ = self.detector.process_frame(frame)
+                        self.current_faces = n_faces
+
+                        now = time.perf_counter()
+                        dt = max(1e-6, now - prev_t)
+                        prev_t = now
+                        self._fps_samples.append(1.0 / dt)
+                        fps = sum(self._fps_samples) / len(self._fps_samples)
+
+                        scores = self.detector._last_scores
+                        avg_score = (sum(scores) / len(scores)) if scores else None
+                        _draw_hud(rendered, fps, n_faces, self.detector.backend, avg_score)
+                        last_frame = rendered
+                    elif self.state == GameState.RUNNING:
                         print("Failed to read frame from camera")
                         break
-                    frame = cv2.flip(frame, 1)  # mirror for natural feel
 
-                    rendered, n_faces, _ = self.detector.process_frame(frame)
+                if last_frame is None:
+                    last_frame = np.zeros((720, 1280, 3), dtype=np.uint8)
 
-                    now = time.perf_counter()
-                    dt = max(1e-6, now - prev_t)
-                    prev_t = now
-                    self._fps_samples.append(1.0 / dt)
-                    fps = sum(self._fps_samples) / len(self._fps_samples)
+                display = last_frame.copy()
 
-                    scores = self.detector._last_scores
-                    avg_score = (sum(scores) / len(scores)) if scores else None
-                    _draw_hud(rendered, fps, n_faces,
-                              self.detector.backend, avg_score)
-                    last_frame = rendered
+                # ---- State-specific logic and overlays ----
+                if self.state == GameState.RUNNING:
+                    if not self.paused:
+                        # Score only when face target is met
+                        if n_faces >= self.max_faces:
+                            self.faces_detected_this_switch = True
 
-                if last_frame is not None:
-                    display = last_frame
-                    if paused:
-                        display = last_frame.copy()
-                        h, w = display.shape[:2]
-                        _draw_translucent_rect(
-                            display, (w // 2 - 80, h // 2 - 24),
-                            (w // 2 + 80, h // 2 + 24), Theme.PANEL, 0.7)
-                        _put_text(display, "PAUSED",
-                                  (w // 2 - 42, h // 2 + 6), 0.9,
-                                  Theme.ACCENT, 2)
-                    cv2.imshow(self.WINDOW_NAME, display)
+                        if elapsed >= current_switch_time:
+                            if self.faces_detected_this_switch:
+                                self.add_score()
+                            else:
+                                self.add_strike()
+                            self.faces_detected_this_switch = False
+                            self.reset_switch_timer()
+                            elapsed = 0.0
+                            current_switch_time = self.get_switch_time()
 
+                    if self.state == GameState.RUNNING:  # may have transitioned to END
+                        switch_remaining = max(0.0, current_switch_time - elapsed)
+                        _draw_game_hud(display, self.score, self.strikes,
+                                       switch_remaining, current_switch_time,
+                                       self.max_faces, self.current_faces)
+                        if self.paused:
+                            h_d, w_d = display.shape[:2]
+                            _draw_translucent_rect(
+                                display, (w_d // 2 - 80, h_d // 2 - 24),
+                                (w_d // 2 + 80, h_d // 2 + 24), Theme.PANEL, 0.7)
+                            _put_text(display, "PAUSED",
+                                      (w_d // 2 - 42, h_d // 2 + 6), 0.9, Theme.ACCENT, 2)
+                    else:
+                        _draw_game_over(display, self.score)
+
+                elif self.state == GameState.IDLE:
+                    h_d, w_d = display.shape[:2]
+                    _draw_translucent_rect(display, (0, h_d // 2 - 50),
+                                           (w_d, h_d // 2 + 50), Theme.PANEL, 0.65)
+                    msg = "PRESS [ENTER] OR START BUTTON TO BEGIN"
+                    (tw, _), _ = cv2.getTextSize(msg, Theme.FONT, 0.8, 2)
+                    _put_text(display, msg, (w_d // 2 - tw // 2, h_d // 2 + 10),
+                              0.8, Theme.ACCENT, 2)
+
+                elif self.state == GameState.END:
+                    _draw_game_over(display, self.score)
+
+                cv2.imshow(self.WINDOW_NAME, display)
+
+                # ---- Keyboard input ----
                 key = cv2.waitKey(1) & 0xFF
-                if key == ord('q') or key == 27:  # q or ESC
+                if key == ord('q') or key == 27:
                     break
+                if key in (ord('\r'), ord('\n')):
+                    if self.state in (GameState.IDLE, GameState.END):
+                        self.start_game()
                 if key == ord(' '):
-                    paused = not paused
+                    self.toggle_pause()
+                if key == ord('a'):
+                    self._on_button_left(None)
+                if key == ord('d'):
+                    self._on_button_right(None)
+                if key == ord('r'):
+                    self.start_game()
                 if key == ord('f'):
                     fullscreen = not fullscreen
                     cv2.setWindowProperty(
@@ -607,10 +978,16 @@ class CameraFaceDetector:
             self.stop_detection()
 
     def stop_detection(self) -> None:
+        """Clean up resources"""
         if self.cap is not None:
             self.cap.release()
             self.cap = None
+        
+        # Clean up hardware
+        self.hardware.cleanup()
+        
         cv2.destroyAllWindows()
+        print("✓ Cleanup complete")
 
 
 # ---------------------------------------------------------------------------
