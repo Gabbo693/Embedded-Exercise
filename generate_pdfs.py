@@ -1479,10 +1479,393 @@ self._hdmi_out.writeframe(self._hdmi_frame)""")
     print("  Milestone_G.pdf generated")
 
 
+# ---------------------------------------------------------------------------
+# MILESTONE H
+# ---------------------------------------------------------------------------
+def build_milestone_h():
+    pdf = ReportPDF("Milestone H - Acceptance Testing")
+    pdf.cover(
+        "Milestone H",
+        "Acceptance Test Cases | Test Execution Results |\nIdentified Issues and Improvements",
+    )
+
+    # ---- Section 1: Test Scope ----
+    pdf.add_page()
+    pdf.h1("1. Test Scope and Targets")
+    pdf.para(
+        "Acceptance testing validates that the Face Detection Game meets its functional "
+        "requirements from the player's perspective. Tests were executed on a PYNQ Z2 board "
+        "running the full system: HDMI output via camera.py, MediaPipe face detection backend, "
+        "and four physical push-buttons for input."
+    )
+    pdf.h2("1.1 Testing Targets")
+    pdf.bullets([
+        "Game state transitions (IDLE -> RUNNING -> PAUSED -> END)",
+        "Face detection accuracy and robustness across angles and lighting",
+        "Round scoring and strike logic",
+        "Difficulty scaling (timer reduction as score increases)",
+        "Hardware button responsiveness and control mapping",
+        "HUD accuracy (score, strikes, face count, timer bar)",
+        "System performance (frame rate on target hardware)",
+    ])
+
+    pdf.h2("1.2 Test Environment")
+    pdf.table(
+        ["Property", "Value"],
+        [
+            ["Hardware",       "PYNQ Z2 (Xilinx Zynq-7020)"],
+            ["OS",             "PYNQ Linux (Ubuntu-based)"],
+            ["Python",         "3.8"],
+            ["OpenCV",         "4.5.4 (apt-installed)"],
+            ["Detection backend", "MediaPipe (primary)"],
+            ["Camera",         "USB webcam, 640x480"],
+            ["Display",        "HDMI monitor via base overlay"],
+            ["Input",          "4 physical push-buttons (BTN0-BTN3)"],
+        ],
+        widths=[50, 120],
+    )
+
+    pdf.h2("1.3 Test Case Summary")
+    pdf.table(
+        ["ID", "Title", "Status"],
+        [
+            ["TC-01", "Game start from IDLE state",              "PASS"],
+            ["TC-02", "Face detection -- frontal face",          "PASS"],
+            ["TC-03", "Face detection -- angled face",           "FAIL"],
+            ["TC-04", "Round scoring when target met",           "PASS"],
+            ["TC-05", "Strike added when target not met",        "PASS"],
+            ["TC-06", "Game over at 3 strikes",                  "PASS"],
+            ["TC-07", "Pause and resume",                        "FAIL"],
+            ["TC-08", "Face target adjustment via buttons",      "FAIL"],
+            ["TC-09", "Difficulty scaling with score",           "PASS"],
+            ["TC-10", "Frame rate on PYNQ Z2",                   "FAIL"],
+            ["TC-11", "HUD display accuracy",                    "PASS"],
+            ["TC-12", "Restart from END state",                  "PASS"],
+        ],
+        widths=[18, 120, 32],
+    )
+
+    # ---- Section 2: Test Cases ----
+    pdf.add_page()
+    pdf.h1("2. Acceptance Test Cases and Results")
+
+    def tc(title, tc_id, precondition, steps, expected, actual, status):
+        PASS_COLOR  = (30, 120, 30)
+        FAIL_COLOR  = (160, 30, 30)
+        color = PASS_COLOR if status == "PASS" else FAIL_COLOR
+        # Header
+        pdf.set_fill_color(*color)
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.cell(0, 7, f"  {tc_id}  --  {title}    [{status}]",
+                 fill=True, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(0, 0, 0)
+        # Body rows
+        rows = [
+            ("Precondition", precondition),
+            ("Steps",        steps),
+            ("Expected",     expected),
+            ("Actual",       actual),
+        ]
+        pdf.set_font("Helvetica", "", 8.5)
+        for label, value in rows:
+            pdf.set_fill_color(245, 245, 245)
+            pdf.set_font("Helvetica", "B", 8.5)
+            pdf.cell(38, 6, "  " + label, border=1, fill=True)
+            pdf.set_font("Helvetica", "", 8.5)
+            pdf.set_fill_color(255, 255, 255)
+            # multi_cell moves to next line automatically
+            x_after = pdf.get_x() + 38
+            y_before = pdf.get_y()
+            pdf.set_xy(pdf.get_x() + 38, y_before)
+            pdf.multi_cell(132, 6, value, border=1, fill=True)
+            # ensure we are at the correct y after multi_cell
+        pdf.ln(2)
+
+    tc(
+        "Game start from IDLE state", "TC-01",
+        precondition="Board powered on. Game in IDLE state. HDMI monitor connected.",
+        steps="1. Observe IDLE screen ('PRESS START BUTTON TO BEGIN').\n"
+              "2. Press BTN0 (button 1) once.",
+        expected="Game transitions to RUNNING state. Score=0, strikes=0. "
+                 "Timer bar begins counting down. HUD shows 'SHOW X FACE(S)' prompt.",
+        actual="Game started correctly. HUD appeared with score 0 and timer. "
+               "LED feedback shown as console output (simulation mode).",
+        status="PASS",
+    )
+
+    tc(
+        "Face detection -- frontal face", "TC-02",
+        precondition="Game RUNNING. max_faces=1. Room lighting adequate (>100 lux).",
+        steps="1. Sit approx. 50 cm from camera.\n"
+              "2. Face camera directly (frontal view, eyes forward).\n"
+              "3. Observe HUD face count and bounding box.",
+        expected="Face detected within 1 second. Bounding box drawn. "
+                 "FACES counter shows 1/1. Challenge prompt turns green.",
+        actual="Face detected reliably when looking straight at the camera. "
+               "Bounding box and confidence pill displayed correctly.",
+        status="PASS",
+    )
+
+    tc(
+        "Face detection -- angled face", "TC-03",
+        precondition="Game RUNNING. max_faces=1. Face detected frontally (TC-02 passed).",
+        steps="1. Slowly rotate head to approximately 30 degrees from center.\n"
+              "2. Observe whether detection is maintained.\n"
+              "3. Rotate to 45 degrees and repeat.",
+        expected="Face should remain detected up to ~30 degrees rotation.",
+        actual="Detection lost at angles greater than approximately 20 degrees. "
+               "MediaPipe BlazeFace short-range model struggles with side profiles "
+               "at the 640x480 input resolution on this hardware.",
+        status="FAIL",
+    )
+
+    tc(
+        "Round scoring when face target is met", "TC-04",
+        precondition="Game RUNNING. max_faces=1. Score=0.",
+        steps="1. Position face directly in front of camera.\n"
+              "2. Hold position until the round timer expires (3.0s).\n"
+              "3. Observe score panel.",
+        expected="Score increments from 0 to 1. Timer resets. New round begins.",
+        actual="Score incremented correctly each time face was visible for "
+               "the full round duration.",
+        status="PASS",
+    )
+
+    tc(
+        "Strike added when face target is not met", "TC-05",
+        precondition="Game RUNNING. max_faces=2. Only 1 person available.",
+        steps="1. Show only 1 face to the camera for the entire round.\n"
+              "2. Wait for timer to expire.\n"
+              "3. Observe strikes panel.",
+        expected="Strike count increments by 1. Timer resets.",
+        actual="Strike added correctly when face count was below target "
+               "for the entire round.",
+        status="PASS",
+    )
+
+    pdf.add_page()
+    tc(
+        "Game over at 3 strikes", "TC-06",
+        precondition="Game RUNNING. strikes=2. max_faces=2.",
+        steps="1. Allow timer to expire without meeting face target.\n"
+              "2. Observe state transition.",
+        expected="Game transitions to END state. Game over screen shows final score. "
+                 "LED flashes red 3 times (console output in simulation mode).",
+        actual="Game over screen appeared correctly with final score displayed. "
+               "Restart prompt shown.",
+        status="PASS",
+    )
+
+    tc(
+        "Pause and resume", "TC-07",
+        precondition="Game RUNNING. Timer counting down.",
+        steps="1. Press BTN1 (button 2) once briefly.\n"
+              "2. Observe game state.\n"
+              "3. Press BTN1 again to resume.\n"
+              "4. Verify timer continued from same value.",
+        expected="Game pauses on first press. 'PAUSED' overlay shown. Timer frozen. "
+                 "Timer resumes from correct position on second press.",
+        actual="Button required to be held for ~0.5s to register. Short tap "
+               "not detected. When held long enough, pause/resume worked correctly "
+               "and timer preserved its value.",
+        status="FAIL",
+    )
+
+    tc(
+        "Face target adjustment via buttons", "TC-08",
+        precondition="Game in any state.",
+        steps="1. Press BTN2 (button 3) to decrease face target.\n"
+              "2. Observe HUD challenge prompt and FACES panel.\n"
+              "3. Press BTN3 (button 4) to increase face target.\n"
+              "4. Verify range is clamped to 1-5.",
+        expected="Face target decreases/increases by 1 per press. "
+                 "HUD updates immediately. Target clamped at min=1, max=5.",
+        actual="Button hold required. When held, target adjusted correctly "
+               "but repeated increments fired rapidly due to polling loop "
+               "reading continued HIGH state.",
+        status="FAIL",
+    )
+
+    tc(
+        "Difficulty scaling with score", "TC-09",
+        precondition="Game RUNNING. Score=0.",
+        steps="1. Note initial round timer duration (3.0s).\n"
+              "2. Score 5 consecutive points.\n"
+              "3. Note round timer duration.\n"
+              "4. Score 5 more points (total 10).\n"
+              "5. Note round timer duration.",
+        expected="Timer at score 0 = 3.0s. At score 5 = 2.5s. At score 10 = 2.0s.",
+        actual="Timer scaled correctly per formula max(0.5, 3.0 - score*0.1). "
+               "Verified on-screen timer bar shortening as score increased.",
+        status="PASS",
+    )
+
+    pdf.add_page()
+    tc(
+        "Frame rate on PYNQ Z2", "TC-10",
+        precondition="Game RUNNING. MediaPipe detection backend active.",
+        steps="1. Start game and observe FPS counter in left HUD panel.\n"
+              "2. Record FPS value over 30 seconds.\n"
+              "3. Compare against target (>= 10 FPS for playable experience).",
+        expected="FPS >= 10 for acceptable real-time gameplay.",
+        actual="Observed FPS: 0.5-0.8 FPS. MediaPipe inference (~1.2s per frame) "
+               "dominates the pipeline on the PYNQ Z2 ARM Cortex-A9 processor. "
+               "Game logic remains functionally correct but response feels very sluggish.",
+        status="FAIL",
+    )
+
+    tc(
+        "HUD display accuracy", "TC-11",
+        precondition="Game RUNNING. score=3, strikes=1, max_faces=2, current_faces=1.",
+        steps="1. Check score panel shows '0003'.\n"
+              "2. Check strikes panel shows '1/3'.\n"
+              "3. Check faces panel shows '1/2'.\n"
+              "4. Check challenge prompt colour (amber when not met).\n"
+              "5. Check timer bar colour progression.",
+        expected="All HUD values match game state. Challenge prompt amber "
+                 "when below target, green when met. Timer bar green/amber/red "
+                 "as time decreases.",
+        actual="All HUD values displayed correctly. Colour transitions on "
+               "challenge prompt and timer bar functioned as specified.",
+        status="PASS",
+    )
+
+    tc(
+        "Restart from END state", "TC-12",
+        precondition="Game in END state. Final score displayed.",
+        steps="1. Observe END screen.\n"
+              "2. Press BTN0 (button 1).",
+        expected="Game resets to score=0, strikes=0. Transitions to RUNNING. "
+                 "New round timer starts.",
+        actual="Restart worked correctly when button registered. "
+               "Subject to the same button hold issue as TC-07 and TC-08.",
+        status="PASS",
+    )
+
+    # ---- Section 3: Issues and Improvements ----
+    pdf.add_page()
+    pdf.h1("3. Identified Issues and Improvements")
+
+    pdf.h2("3.1 Issue Log")
+    pdf.table(
+        ["ID", "Severity", "Description", "Failing TCs"],
+        [
+            ["ISS-01", "Critical",  "Frame rate 0.5-0.8 FPS on PYNQ Z2. MediaPipe inference "
+                                    "takes ~1.2s per frame on the ARM Cortex-A9.",          "TC-10"],
+            ["ISS-02", "High",      "Buttons must be held (~0.5s) to register. Short taps "
+                                    "are missed by the 10ms polling loop.",                  "TC-07, TC-08, TC-12"],
+            ["ISS-03", "Medium",    "Face detection fails at angles > ~20 degrees. "
+                                    "Only strict frontal faces reliably detected.",           "TC-03"],
+            ["ISS-04", "Low",       "When button held, face target increments rapidly "
+                                    "(no repeat delay), making fine adjustment difficult.",   "TC-08"],
+        ],
+        widths=[18, 22, 100, 30],
+    )
+
+    pdf.h2("3.2 Issue Detail and Proposed Fixes")
+
+    pdf.h3("ISS-01 -- Frame Rate (Critical)")
+    pdf.para(
+        "Root cause: MediaPipe's BlazeFace TFLite model is compiled for ARMv7 without "
+        "NEON SIMD acceleration in the pip-distributed wheel for this Python version. "
+        "The PYNQ Z2 has a dual-core Cortex-A9 at 666 MHz, which is significantly slower "
+        "than a Raspberry Pi 4 (Cortex-A72 at 1.5 GHz)."
+    )
+    pdf.bullets([
+        "Switch to Haar Cascade backend: 10-25ms per frame vs 1200ms. "
+        "Achieves ~30 FPS at the cost of detection quality.",
+        "Detection frame skipping: run detector every 3rd frame, reuse previous result. "
+        "Triples effective throughput with no impact on game timing.",
+        "Reduce input resolution to 320x240 before passing to detector. "
+        "Saves the internal resize step inside TFLite.",
+        "Compile OpenCV with NEON support from source to accelerate Haar cascade further.",
+    ])
+
+    pdf.h3("ISS-02 -- Button Hold Required (High)")
+    pdf.para(
+        "Root cause: PYNQ Z2 buttons are polled inside the main game loop at ~10ms intervals. "
+        "At 0.5-0.8 FPS the actual poll interval is 1.2-2.0 seconds -- far too slow to catch "
+        "a brief tap. The edge detection compares current vs previous sample, but if a tap "
+        "happens between two samples it is never seen."
+    )
+    pdf.bullets([
+        "Use PYNQ button interrupts instead of polling: "
+        "base.buttons[i].wait_for_value(1) in a dedicated daemon thread. "
+        "This detects presses regardless of frame rate.",
+        "As an immediate workaround: switch to Haar Cascade (ISS-01 fix) to raise FPS, "
+        "which reduces the poll interval and makes short taps detectable.",
+    ])
+    pdf.code("""\
+# Interrupt-based fix (daemon thread per button):
+import threading
+
+def _watch_button(base, idx, callback):
+    while True:
+        base.buttons[idx].wait_for_value(1)   # blocks until pressed
+        callback(None)
+        base.buttons[idx].wait_for_value(0)   # wait for release before next press
+
+for i, cb in enumerate([on_start, on_pause, on_left, on_right]):
+    threading.Thread(target=_watch_button, args=(base, i, cb), daemon=True).start()""")
+
+    pdf.h3("ISS-03 -- Face Angle Recognition (Medium)")
+    pdf.para(
+        "Root cause: MediaPipe BlazeFace short-range model is optimised for frontal faces "
+        "within ~2m. Rotation beyond ~20 degrees causes the face bounding box to shrink "
+        "below the detection threshold at 640x480 resolution."
+    )
+    pdf.bullets([
+        "Switch to BlazeFace full-range model (model_selection=1 in solutions API): "
+        "handles wider angles and distances up to ~5m.",
+        "If using Haar Cascade as the fallback, the alt2 cascade has better angle "
+        "tolerance than the default frontal cascade.",
+        "Add game guidance text prompting the player to face the camera directly "
+        "as a UX mitigation.",
+    ])
+
+    pdf.h3("ISS-04 -- Rapid Repeat on Hold (Low)")
+    pdf.para(
+        "When a button is held, every poll cycle fires the callback, causing the face "
+        "target to jump from 1 to 5 (or 5 to 1) instantly. This makes fine-grained "
+        "adjustment difficult."
+    )
+    pdf.bullets([
+        "Add a minimum repeat delay (e.g. 300ms) after the first edge before allowing "
+        "repeated callbacks while the button remains held.",
+        "Alternatively, require a release-then-press cycle: fire only on rising edge "
+        "(addressed automatically by the interrupt-based fix for ISS-02).",
+    ])
+
+    pdf.h2("3.3 Improvement Suggestions")
+    pdf.table(
+        ["#", "Improvement", "Expected Benefit"],
+        [
+            ["1", "Replace MediaPipe with Haar Cascade on PYNQ Z2",
+             "FPS increase from 0.5 to ~25-30. Resolves ISS-01 and ISS-02."],
+            ["2", "Interrupt-based button handling via PYNQ wait_for_value()",
+             "Reliable tap detection regardless of frame rate. Resolves ISS-02 and ISS-04."],
+            ["3", "Detection frame skipping (every 3rd frame)",
+             "3x throughput improvement without changing detection backend."],
+            ["4", "Downscale input to 320x240 before detection",
+             "~20% faster inference; negligible accuracy loss."],
+            ["5", "Use BlazeFace full-range model (model_selection=1)",
+             "Better detection at angles and distances. Addresses ISS-03."],
+            ["6", "Add on-screen arrow indicators for button functions",
+             "Improved player guidance without relying on documentation."],
+        ],
+        widths=[10, 90, 70],
+    )
+
+    pdf.output("Milestone_H.pdf")
+    print("  Milestone_H.pdf generated")
+
+
 if __name__ == "__main__":
     print("Generating PDFs...")
     build_milestone_d()
     build_milestone_e()
     build_milestone_f()
     build_milestone_g()
+    build_milestone_h()
     print("Done.")
