@@ -79,7 +79,7 @@ pip install -r requirements.txt
 ### Run Face Detection from Webcam
 
 ```bash
-python face_detector.py
+python src/face_detector.py
 ```
 
 The application will:
@@ -94,53 +94,65 @@ The application will:
 
 #### Run all tests:
 ```bash
-pytest test_face_detector.py test_integration.py -v
+pytest
 ```
 
 #### Run tests with coverage:
 ```bash
-pytest test_face_detector.py test_integration.py -v --cov=face_detector --cov-report=html
+pytest --cov=face_detector --cov-report=html
 ```
 
 #### Run verification demo:
 ```bash
-python demo_verification.py
+python scripts/demo_verification.py
 ```
 
 ## Project Structure
 
 ```
 .
-├── face_detector.py           # Main face detection module
-├── test_face_detector.py      # Unit tests (20 tests)
-├── test_integration.py        # Integration tests (16 tests)
-├── demo_verification.py       # System verification demo
+├── src/                       # Core application modules
+│   ├── face_detector.py       # Main face detection & game loop
+│   ├── hardware_controller.py # GPIO / LED / button interface
+│   ├── monitoring_server.py   # Flask REST monitoring API
+│   └── camera.py              # PYNQ FPGA camera interface
+├── tests/                     # Test suite
+│   ├── test_face_detector.py  # Unit tests (20 tests)
+│   ├── test_integration.py    # Integration tests (16 tests)
+│   ├── test_game_mechanics.py # Game mechanic tests
+│   └── test_camera_detection.py # Camera diagnostic tests
+├── scripts/                   # Utility scripts
+│   └── demo_verification.py   # System verification demo
+├── assets/                    # Static assets
+│   └── haarcascade_frontalface_default.xml
+├── milestones/                # Generated milestone PDFs (A-H)
+├── docs/                      # Project documentation
+├── pytest.ini                 # Pytest configuration
 ├── requirements.txt           # Python dependencies
-├── README.md                  # This file
-└── .gitignore                 # Git configuration
+└── README.md                  # This file
 ```
 
 ## File Descriptions
 
-### face_detector.py
+### src/face_detector.py
 
 **FaceDetector Class**
 - `detect_faces()`: Find faces in an image
 - `draw_faces()`: Draw bounding boxes and numbers
 - `process_frame()`: Complete detection and drawing pipeline
-- Supports both Haar Cascade and DNN detection methods
+- Supports MediaPipe, DNN, and Haar Cascade detection methods
 
 **CameraFaceDetector Class**
 - `start_detection()`: Begin real-time camera capture
 - Automatic camera ID detection (supports external cameras)
 - `stop_detection()`: Clean camera shutdown
 
-### test_face_detector.py
+### tests/test_face_detector.py
 - 20 unit tests covering initialization, detection, and drawing
 - Tests for both Haar Cascade and DNN approaches
 - Validates message accuracy and confidence thresholds
 
-### test_integration.py
+### tests/test_integration.py
 - 16 integration tests for complete workflows
 - Tests for multiple image sizes and consistency
 - Camera initialization tests
